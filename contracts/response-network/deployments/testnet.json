@@ -1,0 +1,9 @@
+{
+  "network": "testnet",
+  "publishedAt": "2026-03-18",
+  "publisher": "0x823b6f48b2e9d7b38e980df2439ebfc26598ec8056957d52f8777b5bd66fdf59",
+  "digest": "97PxiKcJ7kdLtNK3vaVoBEqRyocMWyFEoP5YbHmJeCWw",
+  "packageId": "0x49fa5c1a7bc586d9a733b5eea5fc264d4f40fa1e7463925ee6f5c14448eeaa99",
+  "registryId": "0x46dbf80c58d61fae8bb68bd3e9d12ae6b61e3c150f9b8043bfbe91e70f4693c4",
+  "upgradeCapId": "0x4b15032c56a7ec2178a5a982e039220a40395013ab62549edb084d67062da340"
+}

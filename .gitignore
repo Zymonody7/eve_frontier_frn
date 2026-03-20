@@ -1,0 +1,13 @@
+node_modules
+dist
+.DS_Store
+.vite
+coverage
+*.log
+.playwright-cli
+output
+.vercel
+.sui-client-alt.yaml
+contracts/**/build
+apps/web/.env
+apps/web/.env.local

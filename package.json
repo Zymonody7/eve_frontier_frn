@@ -1,0 +1,23 @@
+{
+  "name": "frontier-response-network",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "npm@11.8.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @frn/web --",
+    "build": "npm run build --workspace @frn/web",
+    "test": "npm run test --workspace @frn/web --",
+    "test:smoke": "npm run test --workspace @frn/web -- --run",
+    "typecheck": "npm run typecheck --workspace @frn/web",
+    "publish:response-network": "bash ./scripts/publish_response_network.sh",
+    "publish:response-network:sdk": "node ./scripts/publish_response_network_sdk.mjs"
+  },
+  "dependencies": {
+    "@mysten/dapp-kit": "^1.0.4",
+    "@mysten/sui": "^2.9.0"
+  }
+}
