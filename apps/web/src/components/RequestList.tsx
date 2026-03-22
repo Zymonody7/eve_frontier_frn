@@ -2,6 +2,7 @@ import type { ServiceRequest } from "@frn/shared";
 import { Link } from "react-router-dom";
 import { dashboardRequestDetailPath } from "../app/routes";
 import {
+  formatCompactStatusLabel,
   formatDeadline,
   formatHazardLabel,
   formatStatusLabel,
@@ -45,8 +46,12 @@ export function RequestList({ requests }: RequestListProps) {
             <span data-label="Reward">{formatSui(request.rewardMist)}</span>
             <span data-label="Hazard">{formatHazardLabel(request.hazardLevel)}</span>
             <span data-label="Requester">{shortAddress(request.requester)}</span>
-            <span className={`status-badge status-${request.status}`} data-label="Status">
-              {formatStatusLabel(request.status)}
+            <span
+              className={`status-badge status-${request.status}`}
+              data-label="Status"
+              title={formatStatusLabel(request.status)}
+            >
+              {formatCompactStatusLabel(request.status)}
             </span>
             <span data-label="Deadline">{formatDeadline(request.deadlineMs)}</span>
           </Link>

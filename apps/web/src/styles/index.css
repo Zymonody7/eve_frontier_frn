@@ -1090,18 +1090,23 @@ textarea {
     linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01)),
     var(--surface-2);
   box-shadow: var(--shadow-soft);
-  min-width: 860px;
+  min-width: 980px;
 }
 
 .request-list-head,
 .request-row {
   display: grid;
-  grid-template-columns: minmax(240px, 2.2fr) minmax(90px, 0.9fr) minmax(84px, 0.8fr) minmax(
-      112px,
+  grid-template-columns: minmax(280px, 2.35fr) minmax(96px, 0.82fr) minmax(94px, 0.78fr) minmax(
+      140px,
       1fr
-    ) minmax(120px, 0.95fr) minmax(110px, 1fr);
+    ) minmax(168px, 1.12fr) minmax(132px, 0.92fr);
   gap: 14px;
   align-items: center;
+}
+
+.request-list-head > *,
+.request-row > * {
+  min-width: 0;
 }
 
 .request-list-head {
@@ -1154,6 +1159,15 @@ textarea {
   color: var(--accent);
   font-size: 0.8rem;
   letter-spacing: 0.02em;
+}
+
+.request-row .status-badge {
+  justify-self: start;
+  max-width: 100%;
+}
+
+.request-row > :last-child {
+  white-space: nowrap;
 }
 
 .request-card {

@@ -64,6 +64,22 @@ export function formatStatusLabel(status: RequestStatus) {
   return labels[status];
 }
 
+export function formatCompactStatusLabel(status: RequestStatus) {
+  const labels: Record<RequestStatus, string> = {
+    draft: "Draft",
+    open: "Open",
+    accepted: "Accepted",
+    in_progress: "In progress",
+    awaiting_confirmation: "Awaiting sign-off",
+    completed: "Completed",
+    cancelled: "Cancelled",
+    expired: "Expired",
+    disputed: "Disputed"
+  };
+
+  return labels[status];
+}
+
 export function formatHazardLabel(hazard: HazardLevel) {
   return `${hazard} risk`;
 }
