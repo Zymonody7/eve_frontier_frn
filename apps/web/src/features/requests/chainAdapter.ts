@@ -83,6 +83,12 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function swallowLocalMirrorError(error: unknown) {
+  if (typeof console !== "undefined" && typeof console.warn === "function") {
+    console.warn("Skipped local mirror sync after successful chain write.", error);
+  }
+}
+
 function toRecord(value: unknown) {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
 }
@@ -275,6 +281,14 @@ export class ChainResponseNetworkAdapter implements ResponseNetworkAdapter {
     );
   }
 
+  private syncLocalMirror(operation: () => void) {
+    try {
+      operation();
+    } catch (error) {
+      swallowLocalMirrorError(error);
+    }
+  }
+
   private async loadSnapshot(force = false) {
     if (!this.canReadFromChain()) {
       return {
@@ -424,11 +438,13 @@ export class ChainResponseNetworkAdapter implements ResponseNetworkAdapter {
 
     const receipt = createChainReceipt(requestId, result.digest);
 
-    createLocalRequest(input, {
-      requestId,
-      transport: "chain",
-      reference: result.digest
-    });
+    this.syncLocalMirror(() =>
+      createLocalRequest(input, {
+        requestId,
+        transport: "chain",
+        reference: result.digest
+      })
+    );
     this.invalidateSnapshot();
 
     return receipt;
@@ -443,7 +459,9 @@ export class ChainResponseNetworkAdapter implements ResponseNetworkAdapter {
     const result = await this.executeTransaction(
       buildActionTransaction(this.config, id, "accept_request")
     );
-    acceptLocalRequest(id, actor, { transport: "chain", reference: result.digest });
+    this.syncLocalMirror(() =>
+      acceptLocalRequest(id, actor, { transport: "chain", reference: result.digest })
+    );
     this.invalidateSnapshot();
     return createChainReceipt(id, result.digest);
   }
@@ -457,7 +475,9 @@ export class ChainResponseNetworkAdapter implements ResponseNetworkAdapter {
     const result = await this.executeTransaction(
       buildActionTransaction(this.config, id, "mark_in_progress")
     );
-    markLocalRequestInProgress(id, actor, { transport: "chain", reference: result.digest });
+    this.syncLocalMirror(() =>
+      markLocalRequestInProgress(id, actor, { transport: "chain", reference: result.digest })
+    );
     this.invalidateSnapshot();
     return createChainReceipt(id, result.digest);
   }
@@ -471,10 +491,12 @@ export class ChainResponseNetworkAdapter implements ResponseNetworkAdapter {
     const result = await this.executeTransaction(
       buildActionTransaction(this.config, id, "mark_awaiting_confirmation")
     );
-    markLocalRequestAwaitingConfirmation(id, actor, {
-      transport: "chain",
-      reference: result.digest
-    });
+    this.syncLocalMirror(() =>
+      markLocalRequestAwaitingConfirmation(id, actor, {
+        transport: "chain",
+        reference: result.digest
+      })
+    );
     this.invalidateSnapshot();
     return createChainReceipt(id, result.digest);
   }
@@ -488,7 +510,12 @@ export class ChainResponseNetworkAdapter implements ResponseNetworkAdapter {
     const result = await this.executeTransaction(
       buildActionTransaction(this.config, id, "confirm_completion")
     );
-    confirmLocalRequestCompletion(id, actor, { transport: "chain", reference: result.digest });
+    this.syncLocalMirror(() =>
+      confirmLocalRequestCompletion(id, actor, {
+        transport: "chain",
+        reference: result.digest
+      })
+    );
     this.invalidateSnapshot();
     return createChainReceipt(id, result.digest);
   }
@@ -502,7 +529,9 @@ export class ChainResponseNetworkAdapter implements ResponseNetworkAdapter {
     const result = await this.executeTransaction(
       buildActionTransaction(this.config, id, "cancel_open_request")
     );
-    cancelLocalOpenRequest(id, actor, { transport: "chain", reference: result.digest });
+    this.syncLocalMirror(() =>
+      cancelLocalOpenRequest(id, actor, { transport: "chain", reference: result.digest })
+    );
     this.invalidateSnapshot();
     return createChainReceipt(id, result.digest);
   }
