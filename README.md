@@ -16,7 +16,7 @@ through its status lifecycle, and release funds only after requester confirmatio
 - `apps/web`: React + Vite dApp
 - `contracts/response-network`: Sui Move package for the rescue lifecycle and escrow
 - `packages/shared`: shared request / escrow models
-- `docs`: PRD, dev guide, execution plan, and demo rehearsal script
+- `scripts`: publish helpers for the on-chain package
 
 ## Judge-facing proof surface
 
@@ -99,21 +99,12 @@ stateDiagram-v2
 | Publish Digest | `97PxiKcJ7kdLtNK3vaVoBEqRyocMWyFEoP5YbHmJeCWw` |
 | Deployment Record | `contracts/response-network/deployments/testnet.json` |
 
-## Demo video location
+## Live demo
 
-- Final hosted demo URL: `TBD before submission`
-- Rehearsal script and recording checklist: `docs/frontier-response-network-demo-script.md`
-
-## Documentation map
-
-- Product / architecture notes: `docs/frontier-response-network-prd.md`
-- Builder handbook: `docs/frontier-response-network-dev-guide.md`
-- Active execution plan: `docs/frontier-response-network-7-day-execution-plan.md`
-- Demo script: `docs/frontier-response-network-demo-script.md`
+- Hosted app: `https://eve-frontier-frn-web-orcw.vercel.app/`
 
 ## Known limitations
 
 - Reads still rely on event/object polling instead of a dedicated indexer
 - The local mirror and cached snapshot improve resilience, but chain state is still the only source of truth
 - Frontend smoke coverage focuses on the core publishing and settlement story, not a full browser E2E matrix yet
-- Demo video URL still needs to be added before final submission
