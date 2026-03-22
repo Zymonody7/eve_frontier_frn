@@ -13,7 +13,7 @@ export function App() {
         defaultOptions: {
           queries: {
             staleTime: 10_000,
-            refetchOnWindowFocus: false
+            refetchOnWindowFocus: true
           }
         }
       })

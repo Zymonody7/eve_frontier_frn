@@ -43,13 +43,14 @@ export function RequestDetailPage() {
   const [lastReceipt, setLastReceipt] = useState<MutationReceipt | null>(null);
   const [error, setError] = useState<string | null>(null);
   const chainRefetchInterval =
-    runtime.mode === "chain" && runtime.chainReady && !runtime.isReadDegraded ? 10_000 : false;
+    runtime.mode === "chain" && runtime.chainReady && !runtime.isReadDegraded ? 5_000 : false;
 
   const { data: request, isLoading } = useQuery({
     queryKey: ["requests", "detail", requestId],
     queryFn: () => adapter.getRequest(requestId),
     refetchInterval: chainRefetchInterval,
-    refetchIntervalInBackground: true
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true
   });
 
   const { data: escrow } = useQuery({
@@ -57,14 +58,16 @@ export function RequestDetailPage() {
     queryFn: () => adapter.getEscrow(requestId),
     enabled: Boolean(requestId),
     refetchInterval: chainRefetchInterval,
-    refetchIntervalInBackground: true
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true
   });
   const { data: activities = [] } = useQuery({
     queryKey: ["requests", "activity", requestId],
     queryFn: () => adapter.getRequestActivity(requestId),
     enabled: Boolean(requestId),
     refetchInterval: chainRefetchInterval,
-    refetchIntervalInBackground: true
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true
   });
 
   const actionMutation = useMutation({
@@ -157,6 +160,37 @@ export function RequestDetailPage() {
         ? request.requester
         : undefined);
   const isRefunded = escrow?.refunded ?? request.status === "cancelled";
+  const canAccept = request.status === "open" && Boolean(currentAccount) && !viewerIsRequester;
+  const canMarkInProgress =
+    request.status === "accepted" && Boolean(currentAccount) && viewerIsResponder;
+  const canMarkAwaitingConfirmation =
+    (request.status === "accepted" || request.status === "in_progress") &&
+    Boolean(currentAccount) &&
+    viewerIsResponder;
+  const canConfirmCompletion =
+    request.status === "awaiting_confirmation" && Boolean(currentAccount) && viewerIsRequester;
+  const canCancel = request.status === "open" && Boolean(currentAccount) && viewerIsRequester;
+  const canTakeAction =
+    canAccept ||
+    canMarkInProgress ||
+    canMarkAwaitingConfirmation ||
+    canConfirmCompletion ||
+    canCancel;
+  const actionHint = !currentAccount
+    ? null
+    : request.status === "awaiting_confirmation"
+      ? viewerIsRequester
+        ? "Confirm completion to release the escrowed reward to the responder."
+        : "Switch back to the requester wallet to finish this contract."
+      : request.status === "completed"
+        ? "This contract is already completed and the escrow has been released."
+        : request.status === "cancelled"
+          ? "This contract has already been cancelled and refunded."
+          : viewerIsRequester
+            ? "Wait for a responder to advance the mission before the next requester action."
+            : viewerIsResponder
+              ? "Advance the mission from this wallet when you are ready."
+              : "Switch to the requester or responder wallet to continue this mission.";
 
   return (
     <div className="stack-lg">
@@ -296,7 +330,7 @@ export function RequestDetailPage() {
             )}
 
             <div className="button-row">
-              {request.status === "open" && currentAccount && !viewerIsRequester ? (
+              {canAccept ? (
                 <button
                   className="button primary"
                   disabled={actionMutation.isPending}
@@ -307,7 +341,7 @@ export function RequestDetailPage() {
                 </button>
               ) : null}
 
-              {request.status === "accepted" && currentAccount && viewerIsResponder ? (
+              {canMarkInProgress ? (
                 <button
                   className="button primary"
                   disabled={actionMutation.isPending}
@@ -318,9 +352,7 @@ export function RequestDetailPage() {
                 </button>
               ) : null}
 
-              {(request.status === "accepted" || request.status === "in_progress") &&
-              currentAccount &&
-              viewerIsResponder ? (
+              {canMarkAwaitingConfirmation ? (
                 <button
                   className="button primary"
                   disabled={actionMutation.isPending}
@@ -331,7 +363,7 @@ export function RequestDetailPage() {
                 </button>
               ) : null}
 
-              {request.status === "awaiting_confirmation" && currentAccount && viewerIsRequester ? (
+              {canConfirmCompletion ? (
                 <button
                   className="button primary"
                   disabled={actionMutation.isPending}
@@ -342,7 +374,7 @@ export function RequestDetailPage() {
                 </button>
               ) : null}
 
-              {request.status === "open" && currentAccount && viewerIsRequester ? (
+              {canCancel ? (
                 <button
                   className="button ghost"
                   disabled={actionMutation.isPending}
@@ -354,6 +386,7 @@ export function RequestDetailPage() {
               ) : null}
             </div>
 
+            {currentAccount && !canTakeAction ? <p className="subtle-text">{actionHint}</p> : null}
             {lastReceipt ? (
               <p className="success-text">{formatMutationReceiptLabel(lastReceipt)}</p>
             ) : null}

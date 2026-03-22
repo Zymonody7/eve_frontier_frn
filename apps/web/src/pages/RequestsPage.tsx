@@ -11,12 +11,13 @@ export function RequestsPage() {
   const adapter = useResponseNetworkAdapter();
   const runtime = useResponseNetworkRuntime();
   const chainRefetchInterval =
-    runtime.mode === "chain" && runtime.chainReady && !runtime.isReadDegraded ? 15_000 : false;
+    runtime.mode === "chain" && runtime.chainReady && !runtime.isReadDegraded ? 5_000 : false;
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["requests", "all"],
     queryFn: () => adapter.listRequests(),
     refetchInterval: chainRefetchInterval,
-    refetchIntervalInBackground: true
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true
   });
   const [hazard, setHazard] = useState<"all" | HazardLevel>("all");
   const [status, setStatus] = useState<"all" | ServiceRequest["status"]>("all");

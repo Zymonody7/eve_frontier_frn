@@ -9,6 +9,9 @@ export function useWalletBalance(address?: string) {
     queryKey: ["wallet-balance", address],
     enabled: Boolean(address),
     staleTime: 15_000,
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       return client.getBalance({
         owner: address!,

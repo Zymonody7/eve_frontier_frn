@@ -14,12 +14,13 @@ export function DashboardOverviewPage() {
   const runtime = useResponseNetworkRuntime();
   const { currentAccount, network } = useWalletSession();
   const chainRefetchInterval =
-    runtime.mode === "chain" && runtime.chainReady && !runtime.isReadDegraded ? 15_000 : false;
+    runtime.mode === "chain" && runtime.chainReady && !runtime.isReadDegraded ? 5_000 : false;
   const { data: requests = [] } = useQuery({
     queryKey: ["requests", "all"],
     queryFn: () => adapter.listRequests(),
     refetchInterval: chainRefetchInterval,
-    refetchIntervalInBackground: true
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true
   });
 
   const openRequests = requests.filter((request) => request.status === "open");

@@ -14,13 +14,14 @@ export function MePage() {
   const runtime = useResponseNetworkRuntime();
   const { currentAccount } = useWalletSession();
   const chainRefetchInterval =
-    runtime.mode === "chain" && runtime.chainReady && !runtime.isReadDegraded ? 15_000 : false;
+    runtime.mode === "chain" && runtime.chainReady && !runtime.isReadDegraded ? 5_000 : false;
   const { data, isLoading } = useQuery({
     queryKey: ["me", currentAccount?.address],
     queryFn: () => adapter.getMyDashboard(currentAccount?.address ?? ""),
     enabled: Boolean(currentAccount?.address),
     refetchInterval: chainRefetchInterval,
-    refetchIntervalInBackground: true
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true
   });
 
   if (!currentAccount) {

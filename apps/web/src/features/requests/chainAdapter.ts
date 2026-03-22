@@ -35,12 +35,19 @@ import type { ResponseNetworkRuntimeConfig } from "./runtimeConfig";
 
 type ChainExecutionResult = {
   digest: string;
+  events?: Array<{
+    parsedJson?: unknown;
+    type?: string;
+  }> | null;
   objectChanges?: Array<{
     objectId?: string;
     objectType?: string;
     type?: string;
   }> | null;
 };
+
+const CREATE_REQUEST_EVENT_SUFFIX = "::RequestCreated";
+const CREATE_REQUEST_RESOLUTION_RETRY_MS = [250, 750, 1_500] as const;
 
 type ChainResponseNetworkAdapterOptions = {
   client: ChainReadClient;
@@ -70,6 +77,40 @@ function assertWritableConfig(config: ResponseNetworkRuntimeConfig) {
     config.packageId && config.registryObjectId,
     "Chain mode is enabled, but the package id or registry object id is missing."
   );
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function toRecord(value: unknown) {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+}
+
+function readIdLike(value: unknown): string | null {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  const record = toRecord(value);
+
+  if (!record) {
+    return null;
+  }
+
+  if (typeof record.id === "string") {
+    return record.id;
+  }
+
+  if (typeof record.bytes === "string") {
+    return record.bytes;
+  }
+
+  if (typeof record.inner === "string") {
+    return record.inner;
+  }
+
+  return null;
 }
 
 function buildActionTransaction(
@@ -120,18 +161,68 @@ function buildCreateRequestTransaction(
   return transaction;
 }
 
-function findRequestObjectId(
+function findRequestIdFromEvents(
   result: ChainExecutionResult,
   config: ResponseNetworkRuntimeConfig
 ) {
-  const expectedType = `::${config.moduleName}::RescueRequest`;
+  const expectedEventType = `${config.packageId}::${config.moduleName}${CREATE_REQUEST_EVENT_SUFFIX}`;
+  const matchingEvent = result.events?.find((event) => event.type === expectedEventType);
+  const parsed = matchingEvent ? toRecord(matchingEvent.parsedJson) : null;
 
-  return result.objectChanges?.find(
+  return parsed ? readIdLike(parsed.request_id) : null;
+}
+
+async function resolveRequestObjectId(
+  client: ChainReadClient,
+  result: ChainExecutionResult,
+  config: ResponseNetworkRuntimeConfig
+) {
+  const requestIdFromEvent = findRequestIdFromEvents(result, config);
+
+  if (requestIdFromEvent) {
+    return requestIdFromEvent;
+  }
+
+  const expectedType = `::${config.moduleName}::RescueRequest`;
+  const directObjectId = result.objectChanges?.find(
     (change) =>
       change.type === "created" &&
       change.objectId &&
       change.objectType?.includes(expectedType)
   )?.objectId;
+
+  if (directObjectId) {
+    return directObjectId;
+  }
+
+  const createdObjectIds = result.objectChanges
+    ?.filter((change): change is { objectId: string; objectType?: string; type?: string } =>
+      change.type === "created" && Boolean(change.objectId)
+    )
+    .map((change) => change.objectId) ?? [];
+
+  for (const objectId of createdObjectIds) {
+    const request = await loadChainRequest(client, config, objectId);
+
+    if (request) {
+      return request.id;
+    }
+  }
+
+  for (const retryDelay of CREATE_REQUEST_RESOLUTION_RETRY_MS) {
+    await delay(retryDelay);
+
+    const snapshot = await loadChainSnapshot(client, config);
+    const requestFromSnapshot = snapshot.requests.find(
+      (request) => request.lastTxDigest === result.digest
+    );
+
+    if (requestFromSnapshot) {
+      return requestFromSnapshot.id;
+    }
+  }
+
+  return null;
 }
 
 export class ChainResponseNetworkAdapter implements ResponseNetworkAdapter {
@@ -323,7 +414,14 @@ export class ChainResponseNetworkAdapter implements ResponseNetworkAdapter {
     );
 
     const result = await this.executeTransaction(buildCreateRequestTransaction(this.config, input));
-    const requestId = findRequestObjectId(result, this.config) ?? result.digest;
+    let requestId = result.digest;
+
+    try {
+      requestId = (await resolveRequestObjectId(this.client, result, this.config)) ?? result.digest;
+    } catch {
+      requestId = result.digest;
+    }
+
     const receipt = createChainReceipt(requestId, result.digest);
 
     createLocalRequest(input, {

@@ -38,6 +38,10 @@ type AdapterContextValue = {
 
 type ChainExecutionResult = {
   digest: string;
+  events?: Array<{
+    parsedJson?: unknown;
+    type?: string;
+  }> | null;
   objectChanges?: Array<{
     objectId?: string;
     objectType?: string;
@@ -72,6 +76,7 @@ export function AdapterProvider({ children }: PropsWithChildren) {
           transactionBlock: bytes,
           signature,
           options: {
+            showEvents: true,
             showEffects: true,
             showObjectChanges: true,
             showRawEffects: true

@@ -12,12 +12,13 @@ export function LandingPage() {
   const adapter = useResponseNetworkAdapter();
   const runtime = useResponseNetworkRuntime();
   const chainRefetchInterval =
-    runtime.mode === "chain" && runtime.chainReady && !runtime.isReadDegraded ? 15_000 : false;
+    runtime.mode === "chain" && runtime.chainReady && !runtime.isReadDegraded ? 5_000 : false;
   const { data: requests = [] } = useQuery({
     queryKey: ["requests", "all"],
     queryFn: () => adapter.listRequests(),
     refetchInterval: chainRefetchInterval,
-    refetchIntervalInBackground: true
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true
   });
 
   const liveContracts = requests.length;
